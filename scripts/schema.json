@@ -1,0 +1,50 @@
+[
+  {
+    "name": "filename",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Name of the uploaded GCS object"
+  },
+  {
+    "name": "bucket",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "GCS bucket name where the file was uploaded"
+  },
+  {
+    "name": "size",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Size of the file in bytes"
+  },
+  {
+    "name": "content_type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "MIME content type of the file"
+  },
+  {
+    "name": "word_count",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Calculated or simulated word count from OCR"
+  },
+  {
+    "name": "tags",
+    "type": "STRING",
+    "mode": "REPEATED",
+    "description": "List of tags extracted from the document"
+  },
+  {
+    "name": "ocr_text_preview",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Preview of first 200 characters of OCR text"
+  },
+  {
+    "name": "process_timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Timestamp when the document was processed by the pipeline"
+  }
+]

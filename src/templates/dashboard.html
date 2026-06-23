@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuFlow - Event-Driven Document Pipeline</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(17, 24, 39, 0.6);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-primary: #6366f1; /* Indigo */
+            --accent-secondary: #06b6d4; /* Cyan */
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --tag-bg: rgba(99, 102, 241, 0.1);
+            --tag-border: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 35px -8px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo-section h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 2.2rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-section p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Stats Section */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(17, 24, 39, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-primary);
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Main Dashboard Layout */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Filters & Search */
+        .controls-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-wrapper {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Tags Filter Container */
+        .tag-filters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            align-items: center;
+        }
+
+        .filter-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .filter-chip {
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-chip:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .filter-chip.active {
+            background: var(--accent-gradient);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Data Table */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .doc-name {
+            font-weight: 600;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .doc-bucket {
+            font-weight: 400;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.15rem;
+        }
+
+        .date-col {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .size-col {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .badge.special {
+            background: rgba(6, 182, 212, 0.1);
+            border-color: rgba(6, 182, 212, 0.2);
+            color: #22d3ee;
+        }
+
+        .badge.txt {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        /* Sidebar upload simulation */
+        .sidebar-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 0.65rem 0.85rem;
+            color: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Detail Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 650px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 2rem;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+            animation: modalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlide {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.25rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        .modal-header h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .modal-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .modal-meta-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .modal-meta-val {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .preview-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.25rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #a7f3d0; /* Soft mint green for OCR code view */
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Loader */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--accent-primary);
+            animation: spin 0.8s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #1f2937;
+            border-left: 4px solid var(--success);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 2000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.error {
+            border-left-color: var(--error);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo-section">
+                <h1>DocuFlow Pipeline</h1>
+                <p>Event-driven metadata & OCR extraction monitor</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="fetchDocuments()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    Refresh Data
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Section -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-icon">📄</span>
+                <span class="stat-value" id="stat-total-docs">-</span>
+                <span class="stat-label">Processed Files</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">📝</span>
+                <span class="stat-value" id="stat-total-words">-</span>
+                <span class="stat-label">Words Checked</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">🏷️</span>
+                <span class="stat-value" id="stat-total-tags">-</span>
+                <span class="stat-label">Unique Tags</span>
+            </div>
+            <div class="stat-card" style="border-color: rgba(6, 182, 212, 0.15)">
+                <span class="stat-icon">⚙️</span>
+                <span class="stat-value" id="stat-mode" style="font-size: 1.1rem; padding: 0.5rem 0;">Connecting...</span>
+                <span class="stat-label">GCP Connection</span>
+            </div>
+        </div>
+
+        <!-- Dashboard Layout -->
+        <div class="dashboard-layout">
+            <!-- Main Content: Document list -->
+            <div class="glass-panel" style="margin-bottom: 0;">
+                <div class="controls-row">
+                    <div class="search-wrapper">
+                        <input type="text" class="search-input" id="search-bar" placeholder="Search files by name..." oninput="applyFilters()">
+                    </div>
+                </div>
+
+                <!-- Tag Filter chips -->
+                <div class="tag-filters-container" id="tag-filters-row">
+                    <span class="filter-label">Filter:</span>
+                    <button class="filter-chip active" id="chip-all" onclick="selectTag('all')">ALL</button>
+                    <!-- Generated tags go here -->
+                </div>
+
+                <div id="loader" class="spinner"></div>
+
+                <div id="table-wrapper" style="display: none;">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Document Details</th>
+                                    <th>Size</th>
+                                    <th>Content Type</th>
+                                    <th>Word Count</th>
+                                    <th>Tags</th>
+                                    <th>Processed Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="document-table-body">
+                                <!-- Table rows will be inserted here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="empty-state-view" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">📂</div>
+                        <h3>No documents found</h3>
+                        <p>No documents match the search or tag filters.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar: Simulate upload -->
+            <div class="glass-panel" style="margin-bottom: 0;">
+                <h3 class="sidebar-title">⚡ Upload Simulator</h3>
+                <form id="sim-form" onsubmit="runSimulation(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="sim-filename">Mock Filename</label>
+                        <input type="text" class="form-input" id="sim-filename" placeholder="e.g. invoice_2026.txt" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="sim-type">File Type</label>
+                        <select class="form-select" id="sim-type" onchange="toggleContentArea()">
+                            <option value="text/plain">Plain Text (.txt)</option>
+                            <option value="application/pdf">PDF Document (.pdf)</option>
+                            <option value="image/png">PNG Image (.png)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="content-group">
+                        <label class="form-label" for="sim-content">Document Body Content</label>
+                        <textarea class="form-textarea" id="sim-content" placeholder="Type text here. Use words like 'invoice', 'receipt', 'urgent', or 'financial' to trigger tags."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;" id="sim-submit-btn">
+                        Simulate GCS Upload
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Detail Modal -->
+    <div class="modal" id="doc-modal" onclick="closeModalOnOuterClick(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">×</button>
+            <div class="modal-header">
+                <h3 id="modal-filename">Document Details</h3>
+                <span class="badge" id="modal-content-type" style="display: inline-block;">text/plain</span>
+            </div>
+            
+            <div class="modal-meta-grid">
+                <div class="modal-meta-item">
+                    <span class="modal-meta-label">Storage Bucket</span>
+                    <span class="modal-meta-val" id="modal-bucket">-</span>
+                </div>
+                <div class="modal-meta-item">
+                    <span class="modal-meta-label">File Size</span>
+                    <span class="modal-meta-val" id="modal-size">-</span>
+                </div>
+                <div class="modal-meta-item">
+                    <span class="modal-meta-label">Word Count</span>
+                    <span class="modal-meta-val" id="modal-words">-</span>
+                </div>
+                <div class="modal-meta-item">
+                    <span class="modal-meta-label">Processed Date</span>
+                    <span class="modal-meta-val" id="modal-date">-</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <span class="modal-meta-label" style="display: block; margin-bottom: 0.5rem;">Extracted Tags</span>
+                <div class="badge-list" id="modal-tags"></div>
+            </div>
+
+            <div>
+                <span class="modal-meta-label" style="display: block; margin-bottom: 0.5rem;">OCR Text Extract Preview</span>
+                <div class="preview-box" id="modal-preview">No text preview available.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <span id="toast-icon">✅</span>
+        <span id="toast-text">Action successful!</span>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        let documents = [];
+        let activeTag = 'all';
+
+        // Load data on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchDocuments();
+            // Autofill simulation filename
+            resetSimulationForm();
+        });
+
+        function resetSimulationForm() {
+            document.getElementById("sim-filename").value = `invoice_${Math.floor(Date.now() / 1000)}.txt`;
+            document.getElementById("sim-content").value = "INVOICE #9821\nAmount Due: $1,250.00\nPlease pay this bill before tomorrow. This financial report is confidential and contains meeting information.";
+            document.getElementById("sim-type").value = "text/plain";
+            toggleContentArea();
+        }
+
+        function toggleContentArea() {
+            const select = document.getElementById("sim-type");
+            const contentGroup = document.getElementById("content-group");
+            const filenameInput = document.getElementById("sim-filename");
+            let ext = ".txt";
+            
+            if (select.value === "text/plain") {
+                contentGroup.style.display = "block";
+                ext = ".txt";
+            } else {
+                contentGroup.style.display = "none";
+                ext = select.value === "application/pdf" ? ".pdf" : ".png";
+            }
+
+            // Update filename extension if unchanged
+            let base = filenameInput.value.split('.')[0] || "document";
+            filenameInput.value = `${base}${ext}`;
+        }
+
+        // Fetch document lists from the API
+        function fetchDocuments() {
+            document.getElementById("loader").style.display = "block";
+            document.getElementById("table-wrapper").style.display = "none";
+
+            fetch("/api/documents")
+                .then(res => {
+                    if (!res.ok) throw new Error("Server responded with error");
+                    return res.json();
+                })
+                .then(data => {
+                    documents = data.documents || [];
+                    
+                    // Update Mode status
+                    const modeElement = document.getElementById("stat-mode");
+                    if (data.mock_gcp) {
+                        modeElement.innerText = "MOCK / OFFLINE";
+                        modeElement.style.color = "#f59e0b"; // Orange
+                    } else {
+                        modeElement.innerText = "LIVE BIGQUERY";
+                        modeElement.style.color = "#10b981"; // Green
+                    }
+
+                    updateStats();
+                    renderTags();
+                    applyFilters();
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast("Failed to load documents.", true);
+                    document.getElementById("loader").style.display = "none";
+                    document.getElementById("table-wrapper").style.display = "block";
+                    document.getElementById("empty-state-view").style.display = "block";
+                });
+        }
+
+        // Calculate and update stats cards
+        function updateStats() {
+            const totalDocs = documents.length;
+            let totalWords = 0;
+            const uniqueTags = new Set();
+
+            documents.forEach(doc => {
+                totalWords += doc.word_count || 0;
+                if (Array.isArray(doc.tags)) {
+                    doc.tags.forEach(tag => uniqueTags.add(tag));
+                }
+            });
+
+            document.getElementById("stat-total-docs").innerText = totalDocs;
+            document.getElementById("stat-total-words").innerText = totalWords.toLocaleString();
+            document.getElementById("stat-total-tags").innerText = uniqueTags.size;
+        }
+
+        // Build list of unique tags for the filter bar
+        function renderTags() {
+            const uniqueTags = new Set();
+            documents.forEach(doc => {
+                if (Array.isArray(doc.tags)) {
+                    doc.tags.forEach(tag => uniqueTags.add(tag));
+                }
+            });
+
+            const tagsContainer = document.getElementById("tag-filters-row");
+            // Clear generated chips (keep "ALL")
+            const chips = tagsContainer.querySelectorAll(".filter-chip:not(#chip-all)");
+            chips.forEach(c => c.remove());
+
+            // Add new chips
+            Array.from(uniqueTags).sort().forEach(tag => {
+                const button = document.createElement("button");
+                button.className = `filter-chip ${activeTag === tag ? 'active' : ''}`;
+                button.innerText = tag.toUpperCase();
+                button.onclick = () => selectTag(tag);
+                tagsContainer.appendChild(button);
+            });
+        }
+
+        // Filter selection handler
+        function selectTag(tag) {
+            activeTag = tag;
+            const chips = document.querySelectorAll(".filter-chip");
+            chips.forEach(chip => {
+                if (chip.innerText.toLowerCase() === tag.toLowerCase() || (tag === 'all' && chip.id === 'chip-all')) {
+                    chip.classList.add("active");
+                } else {
+                    chip.classList.remove("active");
+                }
+            });
+            applyFilters();
+        }
+
+        // Filter and search application logic
+        function applyFilters() {
+            const searchQuery = document.getElementById("search-bar").value.toLowerCase();
+            const filtered = documents.filter(doc => {
+                const matchesSearch = doc.filename.toLowerCase().includes(searchQuery);
+                const matchesTag = activeTag === 'all' || (Array.isArray(doc.tags) && doc.tags.includes(activeTag));
+                return matchesSearch && matchesTag;
+            });
+
+            renderTable(filtered);
+        }
+
+        // Render table records
+        function renderTable(data) {
+            document.getElementById("loader").style.display = "none";
+            document.getElementById("table-wrapper").style.display = "block";
+            
+            const tbody = document.getElementById("document-table-body");
+            tbody.innerHTML = "";
+
+            if (data.length === 0) {
+                document.getElementById("empty-state-view").style.display = "block";
+                tbody.closest("table").style.display = "none";
+                return;
+            }
+
+            document.getElementById("empty-state-view").style.display = "none";
+            tbody.closest("table").style.display = "table";
+
+            data.forEach(doc => {
+                const tr = document.createElement("tr");
+                tr.style.cursor = "pointer";
+                tr.onclick = () => openModal(doc);
+
+                // Format timestamp
+                let dateStr = "Unknown";
+                if (doc.process_timestamp) {
+                    try {
+                        const date = new Date(doc.process_timestamp);
+                        dateStr = date.toLocaleString();
+                    } catch(e) {}
+                }
+
+                // Format size
+                const sizeStr = formatBytes(doc.size);
+
+                // Create tags badges
+                let tagsBadges = "";
+                if (Array.isArray(doc.tags)) {
+                    doc.tags.slice(0, 3).forEach(tag => {
+                        let specialClass = tag === "mock-ocr" ? "special" : "";
+                        if (tag === "text-format") specialClass = "txt";
+                        tagsBadges += `<span class="badge ${specialClass}">${tag}</span> `;
+                    });
+                    if (doc.tags.length > 3) {
+                        tagsBadges += `<span class="badge" style="background:none; border-style:dashed;">+${doc.tags.length - 3}</span>`;
+                    }
+                }
+
+                tr.innerHTML = `
+                    <td>
+                        <div class="doc-name">
+                            ${doc.filename}
+                            <span class="doc-bucket">gs://${doc.bucket}</span>
+                        </div>
+                    </td>
+                    <td class="size-col">${sizeStr}</td>
+                    <td><code style="font-size:0.8rem; background:rgba(255,255,255,0.03); padding:2px 6px; border-radius:4px;">${doc.content_type}</code></td>
+                    <td><strong style="color:white;">${doc.word_count || 0}</strong></td>
+                    <td><div class="badge-list">${tagsBadges}</div></td>
+                    <td class="date-col">${dateStr}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Helper: Format bytes
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return "0 Bytes";
+            const k = 1024;
+            const sizes = ["Bytes", "KB", "MB"];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+        }
+
+        // Modal triggers
+        function openModal(doc) {
+            document.getElementById("modal-filename").innerText = doc.filename;
+            document.getElementById("modal-content-type").innerText = doc.content_type;
+            document.getElementById("modal-bucket").innerText = `gs://${doc.bucket}`;
+            document.getElementById("modal-size").innerText = formatBytes(doc.size);
+            document.getElementById("modal-words").innerText = doc.word_count || 0;
+            
+            let dateStr = "Unknown";
+            if (doc.process_timestamp) {
+                try {
+                    dateStr = new Date(doc.process_timestamp).toLocaleString();
+                } catch(e) {}
+            }
+            document.getElementById("modal-date").innerText = dateStr;
+
+            // Render tags
+            const tagsContainer = document.getElementById("modal-tags");
+            tagsContainer.innerHTML = "";
+            if (Array.isArray(doc.tags)) {
+                doc.tags.forEach(tag => {
+                    const span = document.createElement("span");
+                    span.className = "badge";
+                    if (tag === "mock-ocr") span.classList.add("special");
+                    if (tag === "text-format") span.classList.add("txt");
+                    span.innerText = tag;
+                    tagsContainer.appendChild(span);
+                });
+            }
+
+            // Render preview
+            document.getElementById("modal-preview").innerText = doc.ocr_text_preview || "No OCR preview available.";
+
+            document.getElementById("doc-modal").classList.add("open");
+        }
+
+        function closeModal() {
+            document.getElementById("doc-modal").classList.remove("open");
+        }
+
+        function closeModalOnOuterClick(event) {
+            if (event.target.id === "doc-modal") {
+                closeModal();
+            }
+        }
+
+        // Simulate Upload Form submission
+        function runSimulation(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById("sim-submit-btn");
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing File...";
+
+            const filename = document.getElementById("sim-filename").value;
+            const contentType = document.getElementById("sim-type").value;
+            const textContent = document.getElementById("sim-content").value;
+            
+            // Build GCS notification event payload
+            const mockGcsNotification = {
+                kind: "storage#object",
+                bucket: "document-pipeline-simulator-bucket",
+                name: filename,
+                size: textContent.length,
+                contentType: contentType
+            };
+
+            // Base64 encode the payload
+            const b64Data = btoa(unescape(encodeURIComponent(JSON.stringify(mockGcsNotification))));
+
+            // Assemble Pub/Sub push notification envelope
+            const pubsubEnvelope = {
+                message: {
+                    attributes: {
+                        eventType: "OBJECT_FINALIZE",
+                        bucketId: mockGcsNotification.bucket,
+                        objectId: mockGcsNotification.name
+                    },
+                    data: b64Data,
+                    messageId: `sim-${Date.now()}`
+                }
+            };
+
+            // Send local simulation request
+            fetch("/pubsub", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Mock-File-Content": btoa(unescape(encodeURIComponent(textContent))) // custom header to supply text to our app
+                },
+                body: JSON.stringify(pubsubEnvelope)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Simulation failed");
+                return res.json();
+            })
+            .then(data => {
+                showToast(`Simulation Success! '${filename}' uploaded & processed.`);
+                resetSimulationForm();
+                fetchDocuments();
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("Simulation failed. Check logs.", true);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Simulate GCS Upload";
+            });
+        }
+
+        // Notification Toast Helper
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toast");
+            const text = document.getElementById("toast-text");
+            const icon = document.getElementById("toast-icon");
+
+            text.innerText = message;
+            if (isError) {
+                toast.classList.add("error");
+                icon.innerText = "❌";
+            } else {
+                toast.classList.remove("error");
+                icon.innerText = "✅";
+            }
+
+            toast.classList.add("show");
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
